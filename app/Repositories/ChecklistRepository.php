@@ -3,9 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\Checklist;
+use App\Traits\ApiResponse;
 
 class ChecklistRepository
 {
+    use ApiResponse;
     /**
      * @var Checklist
      */
@@ -26,9 +28,10 @@ class ChecklistRepository
      *
      * @return Checklist $checklist
      */
-    public function getAll()
+    public function getAll($sectionId)
     {
         return $this->checklist
+            ->where('section_id', $sectionId)
             ->get();
     }
 
@@ -38,11 +41,12 @@ class ChecklistRepository
      * @param $id
      * @return mixed
      */
-    public function getById($id)
+    public function getById($sectionId, $checklistId)
     {
         return $this->checklist
-            ->where('id', $id)
-            ->get();
+            ->where('id', $checklistId)
+            ->where('section_id', $sectionId)
+            ->first();
     }
 
     /**
@@ -54,11 +58,7 @@ class ChecklistRepository
     public function save($data)
     {
         $checklist = new $this->checklist;
-
-        $checklist->title = $data['title'];
-        $checklist->description = $data['description'];
-
-        $checklist->save();
+        $checklist = $checklist->create($data);
 
         return $checklist->fresh();
     }
@@ -69,15 +69,18 @@ class ChecklistRepository
      * @param $data
      * @return Checklist
      */
-    public function update($data, $id)
+    public function update($data, $sectionId, $checklistId)
     {
+        $checklist = $this->checklist
+                ->where('id', $checklistId)
+                ->where('section_id', $sectionId)
+                ->first();
+
+        if (!$checklist) {
+            return null;
+        }
         
-        $checklist = $this->checklist->find($id);
-
-        $checklist->title = $data['title'];
-        $checklist->description = $data['description'];
-
-        $checklist->update();
+        $checklist->update($data);
 
         return $checklist;
     }
@@ -88,10 +91,17 @@ class ChecklistRepository
      * @param $data
      * @return Checklist
      */
-    public function delete($id)
+    public function delete($sectionId, $checklistId)
     {
-        
-        $checklist = $this->checklist->find($id);
+        $checklist = $this->checklist
+                ->where('id', $checklistId)
+                ->where('section_id', $sectionId)
+                ->first();
+
+        if (!$checklist) {
+            return null;
+        }
+
         $checklist->delete();
 
         return $checklist;

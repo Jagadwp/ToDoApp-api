@@ -13,7 +13,7 @@ class StoreChecklistRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,7 +24,11 @@ class StoreChecklistRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            'task' => 'required|string',
+            'priority' => 'required|string|max:20',
+            'status' => 'required|string|max:20',
+            'time_start' => 'nullable',
+            'time_end' => 'nullable',
         ];
     }
 }

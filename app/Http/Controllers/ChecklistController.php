@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreChecklistRequest;
 use App\Services\ChecklistService;
+use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
 
 class ChecklistController extends Controller
 {
+    use ApiResponse;
+    
     /**
      * @var checklistService
      */
@@ -32,30 +36,15 @@ class ChecklistController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index($sectionId)
     {
-        $result = ['status' => 200];
-
         try {
-            $result['data'] = $this->checklistService->getAll();
+            $result = $this->checklistService->getAll($sectionId);
         } catch (Exception $e) {
-            $result = [
-                'status' => 500,
-                'error' => $e->getMessage()
-            ];
+            return $this->handleException($e);
         }
 
-        return response()->json($result, $result['status']);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return $this->sendData($result);
     }
 
     /**
@@ -64,25 +53,17 @@ class ChecklistController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreChecklistRequest $request, $sectionId)
     {
-        $data = $request->only([
-            'title',
-            'description',
-        ]);
-
-        $result = ['status' => 200];
+        $data = $request->validated();
 
         try {
-            $result['data'] = $this->checklistService->saveChecklistData($data);
+            $result = $this->checklistService->saveChecklistData($data, $sectionId);
         } catch (Exception $e) {
-            $result = [
-                'status' => 500,
-                'error' => $e->getMessage()
-            ];
+            return $this->handleException($e);
         }
 
-        return response()->json($result, $result['status']);
+        return $this->sendCreated($result);
     }
 
     /**
@@ -91,30 +72,19 @@ class ChecklistController extends Controller
      * @param  id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($sectionId, $checklistId)
     {
-        $result = ['status' => 200];
-
         try {
-            $result['data'] = $this->checklistService->getById($id);
+            $result = $this->checklistService->getById($sectionId, $checklistId);
         } catch (Exception $e) {
-            $result = [
-                'status' => 500,
-                'error' => $e->getMessage()
-            ];
+            return $this->handleException($e);
         }
-        return response()->json($result, $result['status']);
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  Checklist $checklist
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Checklist $checklist)
-    {
-        //
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+        
+        return $this->sendData($result);
     }
 
     /**
@@ -124,26 +94,21 @@ class ChecklistController extends Controller
      * @param id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(StoreChecklistRequest $request, $sectionId, $checklistId)
     {
-        $data = $request->only([
-            'title',
-            'description'
-        ]);
-
-        $result = ['status' => 200];
+        $data = $request->validated();
 
         try {
-            $result['data'] = $this->checklistService->updateChecklist($data, $id);
-
+            $result = $this->checklistService->updateChecklist($data, $sectionId, $checklistId);
         } catch (Exception $e) {
-            $result = [
-                'status' => 500,
-                'error' => $e->getMessage()
-            ];
+            return $this->handleException($e);
         }
 
-        return response()->json($result, $result['status']);
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+
+        return $this->sendUpdated($result);
 
     }
 
@@ -153,18 +118,18 @@ class ChecklistController extends Controller
      * @param $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($sectionId, $checklistId)
     {
-        $result = ['status' => 200];
-
         try {
-            $result['data'] = $this->checklistService->deleteById($id);
+            $result = $this->checklistService->deleteById($sectionId, $checklistId);
         } catch (Exception $e) {
-            $result = [
-                'status' => 500,
-                'error' => $e->getMessage()
-            ];
+            return $this->handleException($e);
         }
-        return response()->json($result, $result['status']);
+
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+
+        return $this->sendDeleted($result);
     }
 }

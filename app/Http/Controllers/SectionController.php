@@ -115,6 +115,11 @@ class SectionController extends Controller
         } catch (Exception $e) {
             return $this->handleException($e);
         }
+
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+        
         return $this->sendData($result);
     }
 

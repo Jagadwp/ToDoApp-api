@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Checklist;
 use App\Repositories\ChecklistRepository;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
 class ChecklistService
@@ -33,12 +31,13 @@ class ChecklistService
      * @param $id
      * @return String
      */
-    public function deleteById($id)
+    public function deleteById($sectionId, $checklistId)
     {
+
         DB::beginTransaction();
 
         try {
-            $checklist = $this->checklistRepository->delete($id);
+            $checklist = $this->checklistRepository->delete($sectionId, $checklistId);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -58,9 +57,9 @@ class ChecklistService
      *
      * @return String
      */
-    public function getAll()
+    public function getAll($sectionId)
     {
-        return $this->checklistRepository->getAll();
+        return $this->checklistRepository->getAll($sectionId);
     }
 
     /**
@@ -69,9 +68,10 @@ class ChecklistService
      * @param $id
      * @return String
      */
-    public function getById($id)
+    public function getById($sectionId, $checklistId)
     {
-        return $this->checklistRepository->getById($id);
+        
+        return $this->checklistRepository->getById($sectionId, $checklistId);
     }
 
     /**
@@ -81,21 +81,14 @@ class ChecklistService
      * @param array $data
      * @return String
      */
-    public function updateChecklist($data, $id)
+    public function updateChecklist($data, $sectionId, $checklistId)
     {
-        $validator = Validator::make($data, [
-            'title' => 'bail|min:2',
-            'description' => 'bail|max:255'
-        ]);
-
-        if ($validator->fails()) {
-            throw new InvalidArgumentException($validator->errors()->first());
-        }
+        $data["done"] = $data["status"] == 'Completed' ? 1 : 0;
 
         DB::beginTransaction();
 
         try {
-            $checklist = $this->checklistRepository->update($data, $id);
+            $checklist = $this->checklistRepository->update($data, $sectionId, $checklistId);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -117,20 +110,24 @@ class ChecklistService
      * @param array $data
      * @return String
      */
-    public function saveChecklistData($data)
+    public function saveChecklistData($data, $sectionId)
     {
-        $validator = Validator::make($data, [
-            'title' => 'required',
-            'description' => 'required'
-        ]);
+        $data["done"] = $data["status"] == 'Completed' ? 1 : 0;
+        $data["section_id"] = $sectionId;
 
-        if ($validator->fails()) {
-            throw new InvalidArgumentException($validator->errors()->first());
+        DB::beginTransaction();
+
+        try {
+            $result = $this->checklistRepository->save($data);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::info($e->getMessage());
+
+            throw new InvalidArgumentException('Unable to update checklist data');
         }
 
-        $result = $this->checklistRepository->save($data);
+        DB::commit();
 
         return $result;
     }
-
 }

@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Section;
 use App\Repositories\SectionRepository;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
 class SectionService
@@ -35,10 +33,12 @@ class SectionService
      */
     public function deleteById($id)
     {
+        $userId = auth()->user()?->id;
+
         DB::beginTransaction();
 
         try {
-            $section = $this->sectionRepository->delete($id);
+            $section = $this->sectionRepository->delete($userId, $id);
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -111,12 +111,8 @@ class SectionService
      */
     public function updateSection($data, $id)
     {
-        $user = auth()->user();
-
         $date = \strtotime($data["date"]);
         $data["day"] = date('l', $date);
-        $data["user_id"] = $user?->id;
-
 
         DB::beginTransaction();
 

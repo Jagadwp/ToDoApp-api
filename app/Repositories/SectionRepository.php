@@ -76,10 +76,16 @@ class SectionRepository
      */
     public function getById($userId, $id)
     {
-        return $this->section
+        $section = $this->section
             ->where('id', $id)
             ->where('user_id', $userId)
             ->first();
+        
+        if (!$section) {
+            return null;
+        }
+
+        return $section;
     }
 
     /**
@@ -125,7 +131,6 @@ class SectionRepository
      */
     public function delete($userId, $id)
     {
-        
         $section = $this->section
                 ->where('id', $id)
                 ->where('user_id', $userId)

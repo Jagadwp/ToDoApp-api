@@ -12,6 +12,9 @@ This is an To Do App API built with Laravel 8 (PHP Framework), Eloquent (ORM lib
 - Use Service Repositiry Pattern
 ![image](https://user-images.githubusercontent.com/67728406/179780153-a83ce4f1-9774-4d56-b973-77a890fa14ef.png)
 
+## Database Design
+![image](https://user-images.githubusercontent.com/67728406/179783239-72db3055-6808-48b5-a7c9-cf645b9e0a79.png)
+
 ## How to Run
 
 Before you start the program, don't forget to do this on your terminal

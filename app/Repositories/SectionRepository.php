@@ -3,9 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\Section;
+use App\Traits\ApiResponse;
 
 class SectionRepository
 {
+    use ApiResponse;
     /**
      * @var Section
      */
@@ -26,10 +28,44 @@ class SectionRepository
      *
      * @return Section $section
      */
-    public function getAll()
+    public function getAll($userId)
     {
         return $this->section
+            ->where('user_id', $userId)
             ->get();
+    }
+
+    /**
+     * Get all sections with its checklists.
+     *
+     * @return Section $section
+     */
+    public function getAllWithChecklist($userId)
+    {
+        return $this->section
+            ->with('checklist')
+            ->where('user_id', $userId)
+            ->get();
+    }
+
+    /**
+     * Get all sections with its checklists.
+     *
+     * @return Section $section
+     */
+    public function getByIdWithChecklist($userId, $id)
+    {
+        $sections = $this->section
+            ->with('checklist')
+            ->where('id', $id)
+            ->where('user_id', $userId)
+            ->get();
+
+        if ($sections->isEmpty()) {
+            return null;
+        }
+
+        return $sections;
     }
 
     /**
@@ -38,11 +74,12 @@ class SectionRepository
      * @param $id
      * @return mixed
      */
-    public function getById($id)
+    public function getById($userId, $id)
     {
         return $this->section
             ->where('id', $id)
-            ->get();
+            ->where('user_id', $userId)
+            ->first();
     }
 
     /**
@@ -54,11 +91,7 @@ class SectionRepository
     public function save($data)
     {
         $section = new $this->section;
-
-        $section->title = $data['title'];
-        $section->description = $data['description'];
-
-        $section->save();
+        $section = $section->create($data);
 
         return $section->fresh();
     }
@@ -71,13 +104,15 @@ class SectionRepository
      */
     public function update($data, $id)
     {
+        $section = $this->section
+                ->where('id', $id)
+                ->first();
+
+        if (!$section) {
+            return null;
+        }
         
-        $section = $this->section->find($id);
-
-        $section->title = $data['title'];
-        $section->description = $data['description'];
-
-        $section->update();
+        $section->update($data);
 
         return $section;
     }
@@ -88,10 +123,18 @@ class SectionRepository
      * @param $data
      * @return Section
      */
-    public function delete($id)
+    public function delete($userId, $id)
     {
         
-        $section = $this->section->find($id);
+        $section = $this->section
+                ->where('id', $id)
+                ->where('user_id', $userId)
+                ->first();
+
+        if (!$section) {
+            return null;
+        }
+
         $section->delete();
 
         return $section;

@@ -60,7 +60,33 @@ class SectionService
      */
     public function getAll()
     {
-        return $this->sectionRepository->getAll();
+        $userId = auth()->user()?->id;
+
+        return $this->sectionRepository->getAll($userId);
+    }
+
+    /**
+     * Get all section with its checklists.
+     *
+     * @return String
+     */
+    public function getAllWithChecklist()
+    {
+        $userId = auth()->user()?->id;
+
+        return $this->sectionRepository->getAllWithChecklist($userId);
+    }
+    
+    /**
+     * Get all section with its checklists.
+     *
+     * @return String
+     */
+    public function getByIdWithChecklist($id)
+    {
+        $userId = auth()->user()?->id;
+
+        return $this->sectionRepository->getByIdWithChecklist($userId, $id);
     }
 
     /**
@@ -71,7 +97,9 @@ class SectionService
      */
     public function getById($id)
     {
-        return $this->sectionRepository->getById($id);
+        $userId = auth()->user()?->id;
+        
+        return $this->sectionRepository->getById($userId, $id);
     }
 
     /**
@@ -83,14 +111,12 @@ class SectionService
      */
     public function updateSection($data, $id)
     {
-        $validator = Validator::make($data, [
-            'title' => 'bail|min:2',
-            'description' => 'bail|max:255'
-        ]);
+        $user = auth()->user();
 
-        if ($validator->fails()) {
-            throw new InvalidArgumentException($validator->errors()->first());
-        }
+        $date = \strtotime($data["date"]);
+        $data["day"] = date('l', $date);
+        $data["user_id"] = $user?->id;
+
 
         DB::beginTransaction();
 
@@ -119,18 +145,25 @@ class SectionService
      */
     public function saveSectionData($data)
     {
-        $validator = Validator::make($data, [
-            'title' => 'required',
-            'description' => 'required'
-        ]);
+        $user = auth()->user();
 
-        if ($validator->fails()) {
-            throw new InvalidArgumentException($validator->errors()->first());
+        $date = \strtotime($data["date"]);
+        $data["day"] = date('l', $date);
+        $data["user_id"] = $user?->id;
+
+        DB::beginTransaction();
+
+        try {
+            $result = $this->sectionRepository->save($data);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::info($e->getMessage());
+
+            throw new InvalidArgumentException('Unable to update section data');
         }
 
-        $result = $this->sectionRepository->save($data);
+        DB::commit();
 
         return $result;
     }
-
 }

@@ -2,11 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Section;
+use App\Http\Requests\StoreSectionRequest;
+use App\Services\SectionService;
+use App\Traits\ApiResponse;
+use Exception;
 use Illuminate\Http\Request;
 
 class SectionController extends Controller
 {
+    use ApiResponse;
+    
+    /**
+     * @var sectionService
+     */
+    protected $sectionService;
+
+    /**
+     * SectionController Constructor
+     *
+     * @param SectionService $sectionService
+     *
+     */
+    public function __construct(SectionService $sectionService)
+    {
+        $this->sectionService = $sectionService;
+    }
+
+    public function test() {
+        return "ok";
+    }
     /**
      * Display a listing of the resource.
      *
@@ -14,17 +38,49 @@ class SectionController extends Controller
      */
     public function index()
     {
-        //
+        try {
+            $result = $this->sectionService->getAll();
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        return $this->sendData($result);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a listing of the resource with its checklists.
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function getAllWithChecklist()
     {
-        //
+        try {
+            $result = $this->sectionService->getAllWithChecklist();
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        return $this->sendData($result);
+    }
+
+    /**
+     * Display a listing of the resource with its checklists.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getByIdWithChecklist($id)
+    {
+        try {
+            $result = $this->sectionService->getByIdWithChecklist($id);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+
+        return $this->sendData($result);
     }
 
     /**
@@ -33,53 +89,78 @@ class SectionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreSectionRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        try {
+            $result = $this->sectionService->saveSectionData($data);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        return $this->sendCreated($result);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Section  $section
+     * @param  id
      * @return \Illuminate\Http\Response
      */
-    public function show(Section $section)
+    public function show($id)
     {
-        //
+        try {
+            $result = $this->sectionService->getById($id);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+        return $this->sendData($result);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update section.
      *
-     * @param  \App\Models\Section  $section
+     * @param Request $request
+     * @param id
      * @return \Illuminate\Http\Response
      */
-    public function edit(Section $section)
+    public function update(StoreSectionRequest $request, $id)
     {
-        //
-    }
+        $data = $request->validated();
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Section  $section
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Section $section)
-    {
-        //
+        try {
+            $result = $this->sectionService->updateSection($data, $id);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+
+        return $this->sendUpdated($result);
+
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Section  $section
+     * @param $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Section $section)
+    public function destroy($id)
     {
-        //
+        try {
+            $result = $this->sectionService->deleteById($id);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+
+        if(is_null($result)) {
+            return $this->sendNotFound();
+        }
+
+        return $this->sendDeleted($result);
     }
 }
